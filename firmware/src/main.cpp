@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 #include <PololuRPiSlave.h>
-#include <Romi32U4.h>
+#include <AStar32U4.h>
 #include <ServoT3.h>
 
 #include "shmem_buffer.h"
@@ -27,12 +27,12 @@ static constexpr int kMaxBuiltInDIO = 8;
 // Set up the servos
 Servo pwms[5];
 
-Romi32U4Motors motors;
-Romi32U4Encoders encoders;
-Romi32U4ButtonA buttonA;
-Romi32U4ButtonB buttonB;
-Romi32U4ButtonC buttonC;
-Romi32U4Buzzer buzzer;
+AStar32U4Motors motors;
+//AStar32U4Encoders encoders;
+AStar32U4ButtonA buttonA;
+AStar32U4ButtonB buttonB;
+AStar32U4ButtonC buttonC;
+AStar32U4Buzzer buzzer;
 
 PololuRPiSlave<Data, 20> rPiLink;
 
@@ -221,7 +221,7 @@ void testModeLoop() {
 }
 
 void normalModeLoop() {
-  uint16_t battMV = readBatteryMillivolts();
+  uint16_t battMV = readBatteryMillivoltsSV();
   lvHelper.update(battMV);
 
   // Play the LV alert tune if we're in a low voltage state
@@ -304,6 +304,7 @@ void normalModeLoop() {
   // Motors
   motors.setSpeeds(rPiLink.buffer.leftMotor, rPiLink.buffer.rightMotor);
 
+  /*
   // Encoders
   if (rPiLink.buffer.resetLeftEncoder) {
     rPiLink.buffer.resetLeftEncoder = false;
@@ -317,18 +318,20 @@ void normalModeLoop() {
 
   rPiLink.buffer.leftEncoder = encoders.getCountsLeft();
   rPiLink.buffer.rightEncoder = encoders.getCountsRight();
+  */
 
   rPiLink.buffer.batteryMillivolts = battMV;
 }
 
 void setup() {
+  lvHelper.init(readBatteryMillivoltsSV());
   rPiLink.init(20);
 
   // Set up the buzzer in playcheck mode
   buzzer.playMode(PLAY_CHECK);
 
   // Flip the right side motor to better match normal FRC setups
-  motors.flipRightMotor(true);
+  motors.flipM1(true);
 
   // Determine if we should enter test mode
   // If button A and B are pressed during power up, enter test mode

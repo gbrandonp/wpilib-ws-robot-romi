@@ -1,17 +1,33 @@
 #include "low_voltage_helper.h"
-#include <Romi32U4Buzzer.h>
+#include <AStar32U4Buzzer.h>
 
 static volatile unsigned long stateCount = 0;
+
+powerSource_e LowVoltageHelper::m_pwrSource = powerSource_e::PWR_AA;
+uint16_t LowVoltageHelper::minOperatingMV = kAAMinOperatingMV;
 
 static const char lvTune[] PROGMEM = "!L8 V8 A<A A<A A<A A<A R1R1";
 
 enum LVMonitorState { NORMAL, NORMAL_TO_LV, LOW_VOLTAGE, LV_TO_NORMAL };
 static LVMonitorState state = NORMAL;
 
-static Romi32U4Buzzer bzr;
+static AStar32U4Buzzer bzr;
+
+void LowVoltageHelper::init(uint16_t initVoltageMV) {
+  if (initVoltageMV < kAAThresholdMV) {
+    m_pwrSource = powerSource_e::PWR_USB;
+    minOperatingMV = kUsbMinOperatingMV;
+  } else if (initVoltageMV < kLiIonThresholdMV) {
+    m_pwrSource = powerSource_e::PWR_AA;
+    minOperatingMV = kAAMinOperatingMV;
+  } else {
+    m_pwrSource = powerSource_e::PWR_LI;
+    minOperatingMV = kLiIonMinOperatingMV;
+  }
+}
 
 void LowVoltageHelper::update(uint16_t currVoltageMV) {
-  bool isLV = currVoltageMV < kMinOperatingMV;
+  bool isLV = currVoltageMV < minOperatingMV;
 
   switch (state) {
     case NORMAL:
